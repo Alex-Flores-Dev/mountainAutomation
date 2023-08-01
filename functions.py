@@ -32,8 +32,21 @@ def is_element_present(driver, by, value, timeout=10):
         )
         return True
     except Exception as e:
-        print("Element isn't present")
+        print(f"Element isn't present")
 
-def click_element(driver,selector,path):
-    element = driver.find_element(selector,path)
-    driver.execute_script("arguments[0].click();", element)
+def click_element(driver,selector,path, timeout=10):
+    element = WebDriverWait(driver, timeout).until(
+    EC.presence_of_element_located((selector, path))
+    )
+    try:
+        driver.execute_script("arguments[0].click();", element)
+    except StaleElementReferenceException:
+        click_element(driver, element)
+    #element = driver.find_element(selector,path)
+    #driver.execute_script("arguments[0].click();", element)
+
+def get_element_text_safely(element):
+    try:
+        return element.text
+    except StaleElementReferenceException:
+        return get_element_text_safely(element)

@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
-from functions import get_variables,get_chrome_driver,select_date_range,is_element_present,click_element
+from functions import get_variables,get_chrome_driver,select_date_range,is_element_present,click_element,get_element_text_safely
 
 user = get_variables("JANEAPP.COM","user")
 password = get_variables("JANEAPP.COM","password")
@@ -57,27 +57,25 @@ WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH, '//div
 time.sleep(5)
 payments_to_aprobe = 0
 while 1==1:
-    print(1)
     WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH, '//div[@id="insurer_content"]/div'))
     time.sleep(1)
-    print(2)
     if is_element_present(driver,By.XPATH,'//button[@class="btn btn-link hide-old load-more" and @style="display: inline-block;"]'):
         click_element(driver,By.XPATH,'//button[@class="btn btn-link hide-old load-more" and @style="display: inline-block;"]')
-    print(3)
     if is_element_present(driver,By.XPATH,'//button[@class="btn btn-link hide-old load-more" and @style="display: none;"]'):
         payments_to_aprobe = len(driver.find_elements(By.XPATH,'//tbody[@class="purchases"]/tr'))
         break
 
 print("payments =>",payments_to_aprobe)
 for payment in range (payments_to_aprobe):
+    print(f"{payment} paymeny")
     if is_element_present(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//strong[@class="submitted"]'):
-        print(f"number {payment+1}" + driver.find_element(By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="sensitive"]').text)
+        print(" present")
+        print(f"number {payment+1} " + get_element_text_safely(WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="sensitive"]'))))
         for diff_payment in range(len(driver.find_elements(By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="pay-and-approve"]'))):
-            print(diff_payment+1)
+            print(" Pay and aprove")
             if is_element_present(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="pay-and-approve"]',1):
-                print("click ")
+                print(f"{diff_payment + 1} payed and approved")
                 click_element(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="pay-and-approve"]')
-                time.sleep(1)
 
     print("==============")
 
