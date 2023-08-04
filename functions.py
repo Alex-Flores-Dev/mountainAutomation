@@ -11,11 +11,11 @@ from selenium.common.exceptions import TimeoutException
 def get_variables(group,variable):
     config = ConfigParser()
     current_os = os.getcwd()
-    config.read(f"{current_os}\config.ini")
+    config.read("./config.ini")
     return config.get(group, variable)
 
 def get_chrome_driver():
-    result = os.listdir(os.getcwd())
+    result = os.listdir("./")
     return [word for word in result if 'hrome' in word][0]
 
 def select_date_range(driver,date_picker,day,month,year):
@@ -41,7 +41,7 @@ def click_element(driver,selector,path, timeout=10):
     try:
         driver.execute_script("arguments[0].click();", element)
     except StaleElementReferenceException:
-        click_element(driver, element)
+        click_element(driver, element,path, timeout=10)
     #element = driver.find_element(selector,path)
     #driver.execute_script("arguments[0].click();", element)
 

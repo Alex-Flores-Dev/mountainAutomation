@@ -6,6 +6,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 from functions import get_variables,get_chrome_driver,select_date_range,is_element_present,click_element,get_element_text_safely
+from selenium.webdriver.support.ui import Select
 
 user = get_variables("JANEAPP.COM","user")
 password = get_variables("JANEAPP.COM","password")
@@ -23,7 +24,7 @@ to_year = get_variables("INF-TO-PROCESS","to_year")
 account = get_variables("INF-TO-PROCESS","account")
 screen = get_variables("SCREEN","available_to_view")
 
-service = Service(executable_path=get_chrome_driver())
+service = Service(executable_path='chromedriver')
 options = webdriver.ChromeOptions()
 
 if (screen=="no"):options.add_argument('--headless=new')
@@ -53,8 +54,11 @@ date_picker1 =  driver.find_element(By.XPATH, '(//div[@class="react-datepicker__
 select_date_range(driver,date_picker1,from_day,from_month,from_year)
 
 WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH, '//div[@id="insurer_content"]/div'))
-
 time.sleep(5)
+driver.find_element(By.XPATH, '//select[@name="invoice_state"]/option[text()="Submitted"]').click()
+
+WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH, '//div[@id="insurer_content"]/div'))
+
 payments_to_aprobe = 0
 while 1==1:
     WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH, '//div[@id="insurer_content"]/div'))
@@ -64,19 +68,27 @@ while 1==1:
     if is_element_present(driver,By.XPATH,'//button[@class="btn btn-link hide-old load-more" and @style="display: none;"]'):
         payments_to_aprobe = len(driver.find_elements(By.XPATH,'//tbody[@class="purchases"]/tr'))
         break
-
+row=1
 print("payments =>",payments_to_aprobe)
-for payment in range (payments_to_aprobe):
-    print(f"{payment} paymeny")
-    if is_element_present(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//strong[@class="submitted"]'):
-        print(" present")
-        print(f"number {payment+1} " + get_element_text_safely(WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="sensitive"]'))))
-        for diff_payment in range(len(driver.find_elements(By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="pay-and-approve"]'))):
-            print(" Pay and aprove")
-            if is_element_present(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="pay-and-approve"]',1):
-                print(f"{diff_payment + 1} payed and approved")
-                click_element(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{payment+1}]//a[@class="pay-and-approve"]')
+try:
+    for payment in range (payments_to_aprobe):
 
-    print("==============")
+        if get_element_text_safely(WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH,f'((//tbody[@class="purchases"]/tr)[{row}]/td)[8]'))) == "$0.00":
+            row = row + 1
 
+        if is_element_present(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{row}]//strong[@class="submitted"]'):
+            print(f"number {payment+1} " + get_element_text_safely(WebDriverWait(driver,timeout=10).until(lambda d: d.find_element(By.XPATH,f'(//tbody[@class="purchases"]/tr)[{row}]//a[@class="sensitive"]'))))
+            for diff_payment in range(len(driver.find_elements(By.XPATH,f'(//tbody[@class="purchases"]/tr)[{row}]//a[@class="pay-and-approve"]'))):
+                if is_element_present(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{row}]//a[@class="pay-and-approve"]',1):
+                    click_element(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{row}]//a[@class="pay-and-approve"]')
+                    time.sleep(5)
+                    print("payed and approved")
+                else:
+                    time.sleep(5)
+                    click_element(driver,By.XPATH,f'(//tbody[@class="purchases"]/tr)[{row+1}]//a[@class="pay-and-approve"]')
+                    time.sleep(5)
+
+        print("==============")
+except Exception as e:
+    print("PROCESS FINISHED WITH ERRORS")
 print("PROCESS FINISHED SUCCESSFULLY")
